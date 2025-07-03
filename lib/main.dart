@@ -800,6 +800,7 @@ return PageView.builder(
     );
   }
 }
+// ===============================================================
 class _FullScreenImageWithFadePhotoView extends StatefulWidget {
   final String thumbnailUrl;
   final String fullImageUrl;
@@ -848,7 +849,7 @@ class _FullScreenImageWithFadePhotoViewState extends State<_FullScreenImageWithF
         _fullImageProvider = imageProvider;
       });
       _fadeController.forward().then((_) {
-        // Після завершення fade — прибираємо мініатюру
+        // Після завершення fade — прибираємо мініатюруhdfghdfghdfghdfghhfdgh
         setState(() {
           _showThumb = false;
         });
