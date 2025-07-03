@@ -849,7 +849,7 @@ class _FullScreenImageWithFadePhotoViewState extends State<_FullScreenImageWithF
         _fullImageProvider = imageProvider;
       });
       _fadeController.forward().then((_) {
-        // Після завершення fade — прибираємо мініатюруhdfghdfghdfghdfghhfdgh
+        // Після завершення fade — прибираємо мініатюруhdfghdfghdfghdfghhfdghffd
         setState(() {
           _showThumb = false;
         });
