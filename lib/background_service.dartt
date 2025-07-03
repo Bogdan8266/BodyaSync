@@ -1,0 +1,109 @@
+import 'dart:async';
+import 'dart:io';
+import 'dart:ui';
+import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:path/path.dart' as p;
+import 'package:http/http.dart' as http;
+
+const notificationChannelId = 'my_foreground';
+
+Future<void> initializeService() async {
+  final service = FlutterBackgroundService();
+
+  await service.configure(
+    androidConfiguration: AndroidConfiguration(
+      onStart: onStart,
+      autoStart: false,
+      isForegroundMode: true,
+      notificationChannelId: notificationChannelId,
+      initialNotificationTitle: 'Синхронізація',
+      initialNotificationContent: 'Очікування дій...',
+    ),
+    iosConfiguration: IosConfiguration(
+      onForeground: onStart,
+      onBackground: onIosBackground,
+    ),
+  );
+}
+
+@pragma('vm:entry-point')
+void onStart(ServiceInstance service) async {
+  DartPluginRegistrant.ensureInitialized();
+
+  service.on('startUpload').listen((event) async {
+    final directoryPath = event!['path'];
+    final serverIp = event['server_ip'];
+    await uploadFilesFromDirectory(directoryPath, serverIp, service);
+  });
+
+  service.on('stopService').listen((event) {
+    service.stopSelf();
+  });
+}
+
+@pragma('vm:entry-point')
+Future<bool> onIosBackground(ServiceInstance service) async {
+  DartPluginRegistrant.ensureInitialized();
+  return true;
+}
+
+Future<void> uploadFilesFromDirectory(String path, String serverIp, ServiceInstance service) async {
+  final directory = Directory(path);
+  if (!await directory.exists()) {
+    service.setNotificationInfo(
+      title: 'Помилка',
+      content: 'Папку не знайдено',
+    );
+    return;
+  }
+
+  List<FileSystemEntity> files = await directory.list().toList();
+  List<File> mediaFiles = [];
+  for (var file in files) {
+    if (file is File) {
+      String extension = p.extension(file.path).toLowerCase();
+      if (['.jpg', '.jpeg', '.png', '.gif', '.mp4', '.mov', '.avi'].contains(extension)) {
+        mediaFiles.add(file);
+      }
+    }
+  }
+
+  int totalFiles = mediaFiles.length;
+  for (int i = 0; i < totalFiles; i++) {
+    File file = mediaFiles[i];
+    String filename = p.basename(file.path);
+
+    service.setNotificationInfo(
+      title: 'Завантаження...',
+      content: 'Файл: $filename (${i + 1} з $totalFiles)',
+    );
+
+    try {
+      var request = http.MultipartRequest('POST', Uri.parse('$serverIp/upload/'));
+      request.files.add(await http.MultipartFile.fromPath('file', file.path));
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        print('Successfully uploaded $filename');
+      } else {
+        print('Failed to upload $filename. Status: ${response.statusCode}');
+        service.setNotificationInfo(
+          title: 'Помилка завантаження',
+          content: 'Не вдалося завантажити файл: $filename',
+        );
+      }
+    } catch (e) {
+      print('Error uploading $filename: $e');
+      service.setNotificationInfo(
+        title: 'Помилка мережі',
+        content: 'Перевірте з\'єднання та IP-адресу сервера.',
+      );
+      break;
+    }
+  }
+
+  service.setNotificationInfo(
+    title: 'Синхронізація завершена',
+    content: 'Успішно завантажено $totalFiles файлів.',
+  );
+}
