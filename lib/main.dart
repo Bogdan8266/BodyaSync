@@ -409,12 +409,24 @@ Future<void> initializeService() async {
 String formatDateHeader(DateTime date) {
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
-  final yesterday = DateTime(now.year, now.month, now.day - 1);
+  final yesterday = today.subtract(const Duration(days: 1));
+  final twoDaysAgo = today.subtract(const Duration(days: 2));
+  final threeDaysAgo = today.subtract(const Duration(days: 3));
+  final fourDaysAgo = today.subtract(const Duration(days: 4));
+
   if (date.isAtSameMomentAs(today)) return 'Сьогодні';
   if (date.isAtSameMomentAs(yesterday)) return 'Вчора';
-  return DateFormat.yMMMMd('uk_UA').format(date);
+  if (date.isAtSameMomentAs(twoDaysAgo) || date.isAtSameMomentAs(threeDaysAgo)) {
+    // Повний день тижня, наприклад "Понеділок"
+    return DateFormat.EEEE('uk_UA').format(date);
+  }
+  // Старіше 4 днів — скорочений день тижня + дата
+  final shortWeekday = DateFormat.E('uk_UA').format(date); // "Пн", "Вт" і т.д.
+  if (date.year != now.year) {
+    return '$shortWeekday, ${DateFormat('d MMMM yyyy', 'uk_UA').format(date)}';
+  }
+  return '$shortWeekday, ${DateFormat('d MMMM', 'uk_UA').format(date)}';
 }
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('uk_UA', null); 
@@ -598,17 +610,45 @@ Widget build(BuildContext context) {
               padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 60, bottom: MediaQuery.of(context).padding.bottom + 90),
               itemCount: sortedDates.length,
               itemBuilder: (context, index) {
-                final date = sortedDates[index];
-                final itemsForDate = groupedItems[date]!;
+  final date = sortedDates[index];
+  final itemsForDate = groupedItems[date]!;
 
-                return StickyHeader(
-                  header: Container(
-                    height: 50.0,
-                    color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.95),
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    alignment: Alignment.centerLeft,
-                    child: Text(formatDateHeader(date), style: Theme.of(context).textTheme.titleLarge),
-                  ),
+  // Додаємо заголовок місяця, якщо це перший день місяця або перший елемент
+  bool showMonthHeader = false;
+  if (index == 0 || date.month != sortedDates[index - 1].month || date.year != sortedDates[index - 1].year) {
+    showMonthHeader = true;
+  }
+  final monthHeader = DateFormat('LLLL', 'uk_UA').format(date).capitalize();
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      if (showMonthHeader)
+        Padding(
+          padding: const EdgeInsets.only(left: 16, top: 16, bottom: 4),
+          child: Text(
+            monthHeader,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+      StickyHeader(
+        header: Container(
+          height: 40.0,
+          color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.95),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          alignment: Alignment.centerLeft,
+          child: Text(
+            formatDateHeader(date),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              fontSize: 15, // Менший розмір
+            ),
+          ),
+        ),
                   content: GridView.builder(
                     padding: const EdgeInsets.all(4.0),
                     shrinkWrap: true,
@@ -623,7 +663,7 @@ Widget build(BuildContext context) {
                       final item = itemsForDate[gridIndex];
                       
                       return OpenContainer(
-                        transitionDuration: const Duration(milliseconds: 500),
+                        transitionDuration: const Duration(milliseconds: 300),
                         transitionType: ContainerTransitionType.fade,
                         closedColor: Colors.transparent,
                         openColor: Colors.black,
@@ -677,13 +717,15 @@ Widget build(BuildContext context) {
                         onClosed: (_) {
                           _blurAnimationController.reverse();
                         },
-                      );
-                    },
-                  ),
-                );
-              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
-          ),
           
           AnimatedBuilder(
             animation: _blurAnimation,
@@ -701,16 +743,22 @@ Widget build(BuildContext context) {
                   child: Container(
                     color: Colors.black.withOpacity(_blurAnimation.value * 0.4),
                   ),
-                ),
-              );
-            },
-          ),
-        ],
-      );
-    },
-  );
+                  ),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
+  
+
+extension StringCasingExtension on String {
+  String capitalize() => isNotEmpty ? '${this[0].toUpperCase()}${substring(1)}' : '';
 }
+
 // <--- ТУТ ЗАКІНЧУЄТЬСЯ ВИПРАВЛЕНИЙ КЛАС
 class MediaViewerScreen extends StatefulWidget {
   final List<GalleryItem> galleryItems;
@@ -849,7 +897,7 @@ class _FullScreenImageWithFadePhotoViewState extends State<_FullScreenImageWithF
         _fullImageProvider = imageProvider;
       });
       _fadeController.forward().then((_) {
-        // Після завершення fade — прибираємо мініатюруhdfghdfghdfghdfghhfdghffd
+        // !Після завершення fade — 
         setState(() {
           _showThumb = false;
         });
@@ -860,6 +908,7 @@ class _FullScreenImageWithFadePhotoViewState extends State<_FullScreenImageWithF
   @override
   Widget build(BuildContext context) {
     Widget imageStack = Stack(
+      
       fit: StackFit.expand,
       children: [
         // 1. Мініатюра під повним фото тільки поки _showThumb == true
