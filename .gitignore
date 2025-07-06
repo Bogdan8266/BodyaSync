@@ -5,6 +5,8 @@
 *.swp
 .DS_Store
 .atom/
+*.mp4
+*.mp3
 .build/
 .buildlog/
 .history
@@ -32,6 +34,8 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+/memory_ai_poc/test_images
+*/storage
 
 # Symbolication related
 app.*.symbols
@@ -44,3 +48,11 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 /storage
+memory_ai_poc/test_images/
+# Відеофайли
+*.mp4
+
+
+# Папка зі зображеннями для тестів
+/memory_ai_poc/test_images/*.mp4
+/memory_ai_poc/test_images/*.jpg
