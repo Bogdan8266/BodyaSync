@@ -5,54 +5,38 @@
 *.swp
 .DS_Store
 .atom/
+
+# Media files
 *.mp4
 *.mp3
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
 
 # Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
-/memory_ai_poc/test_images
-*/storage
+**/build/
 
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
+# Android artifacts
 /android/app/debug
 /android/app/profile
 /android/app/release
-/storage
-memory_ai_poc/test_images/
-# Відеофайли
-*.mp4
 
+# VS Code
+.vscode/
 
-# Папка зі зображеннями для тестів
-/memory_ai_poc/test_images/*.mp4
-/memory_ai_poc/test_images/*.jpg
+# Test images and storage
+/memory_ai_poc/test_images/
+/storage/
+
+# Obfuscation & symbolication
+app.*.symbols
+app.*.map.json
+
+# IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
