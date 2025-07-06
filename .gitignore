@@ -9,6 +9,10 @@
 # Media files
 *.mp4
 *.mp3
+*.jpg
+*.jpeg
+*.png
+*.gif           
 
 # Flutter/Dart/Pub related
 .dart_tool/
